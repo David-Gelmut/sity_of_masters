@@ -42,19 +42,23 @@ export const useChatStore = defineStore('chat', {
         },
         groupedMessages(messages){
 
+
             if (!messages || messages.length === 0) return {};
 
             const groups = {};
             messages.forEach(msg => {
-                // Форматируем дату красиво ("22 июля 2026 г.")
-                const date = new Date(msg.created_at).toLocaleDateString('ru-RU', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                });
 
-                if (!groups[date]) groups[date] = [];
-                groups[date].push(msg);
+                if (msg) {
+                    // Форматируем дату красиво ("22 июля 2026 г.")
+                    const date = new Date(msg.created_at).toLocaleDateString('ru-RU', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+
+                    if (!groups[date]) groups[date] = [];
+                    groups[date].push(msg);
+                }
             });
 
             return groups;
@@ -63,17 +67,18 @@ export const useChatStore = defineStore('chat', {
         async sendMessageAction(chatId, formData) {
 
             try {
-
                 const response = await axios.post(`/api/chats/${chatId}/messages`, formData, {
                     headers: {'Content-Type': 'multipart/form-data'}
                 });
 
-                // Оптимистично добавляем готовое сообщение (с текстом и файлами сразу)
-                //  if (!this.messages.some(m => m.id === response.data.id)) {
-                this.messages.push(response.data);
-                this.groupsMessages = this.groupedMessages(this.messages);
-                //}
-              //  console.log(this.groupsMessages);
+                if (this.activeChatId === chatId) {
+                    // Оптимистично добавляем готовое сообщение (с текстом и файлами сразу)
+                    if (!this.messages.some(m => m.id === response.data.id)) {
+                        this.messages.push(response.data);
+                        this.groupsMessages = this.groupedMessages(this.messages);
+                    }
+                }
+
                 return response.data;
             } catch (error) {
                 alert('Ошибка отправки сообщения');

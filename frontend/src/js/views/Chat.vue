@@ -285,6 +285,25 @@
                   : 'bg-white text-slate-800 border border-slate-100 rounded-2xl rounded-bl-none pl-4 pr-4 pb-4'"
                 >
 
+                  <!-- Визуализация ПЕРЕСЛАННОГО сообщения (ДОБАВИТЬ ЭТОТ БЛОК) -->
+                  <!-- Предполагается, что в msg есть поле forwarded_from с данными автора -->
+                  <div
+                      v-if="msg.is_forwarded"
+                      class="mb-1.5 flex flex-col text-[11px] border-l-2 pl-2 bg-black/3 py-0.5 rounded-r-md max-w-full"
+                      :class="isMyMessage(msg.user_id) ? 'border-indigo-300 text-indigo-200' : 'border-slate-400 text-slate-400'"
+                  >
+                    <span class="font-bold flex items-center gap-1">
+                      <!-- Иконка стрелочки пересылки -->
+                      <svg class="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                      Пересланное сообщение
+                    </span>
+
+                  </div>
+
+
+
                   <!-- ================= БЛОК ЦИТАТЫ ВНУТРИ ОБЛАЧКА ================= -->
                   <!-- Если у сообщения есть parent_id, выводим плашку-ссылку -->
                   <div
@@ -669,9 +688,6 @@
 
   </div>
 
-
-
-
   <!-- МОДАЛЬНОЕ ОКНО ДЛЯ ПРОСМОТРА ВИДЕО НА ВЕСЬ ЭКРАН -->
   <div
       v-if="isVideoModalOpen"
@@ -748,6 +764,66 @@
     </div>
   </transition>
 
+  <!-- Модальное окно: Переслать сообщение -->
+  <div v-if="isForwardModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+
+    <!-- Задний затемняющий фон -->
+    <div @click="closeForwardModal" class="absolute inset-0 bg-slate-900/50 backdrop-blur-xs"></div>
+
+    <!-- Контентное окно -->
+    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-[80vh] flex flex-col overflow-hidden animate-fade-in">
+
+      <!-- Шапка окна -->
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-800">Переслать сообщение</h3>
+        <button @click="closeForwardModal" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Текст пересылаемого сообщения (мини-превью) -->
+      <div v-if="forwardingMessage" class="p-3 bg-slate-50 text-xs text-slate-500 border-l-4 border-indigo-500 mx-4 mt-3 rounded-r-lg truncate">
+        {{ forwardingMessage.text }}
+      </div>
+
+
+      <!-- Список доступных чатов для пересылки -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-2">
+        <!-- Предполагается, что у вас в сторе есть список всех чатов, например, chatStore.chats -->
+        <div
+            v-for="chat in chatStore.chatList"
+            :key="chat.id"
+            @click="submitForward(chat.id)"
+            class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors active:bg-slate-100"
+        >
+
+          <!-- Аватар чата / собеседника -->
+          <img
+              v-if="chat.users[0]?.avatar_path"
+              :src="chat.users[0].avatar_path"
+              alt="Аватар"
+              class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-semibold text-indigo-600 shrink-0"
+          />
+          <div v-else class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-semibold text-indigo-600 shrink-0">
+            {{ chat.users[0].name?.substring(0, 2).toUpperCase() }}
+          </div>
+
+          <!-- Название чата -->
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-medium text-slate-700 truncate">{{chat.title ? chat.title : chat.users[0].name }}</p>
+          </div>
+
+          <!-- Стрелочка отправки -->
+          <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </div>
+      </div>
+
+    </div>
+  </div>
 
 </template>
 
@@ -757,9 +833,11 @@ import {useAuthStore} from '../store/auth.js';
 import {useChatStore} from '../store/chat.js';
 import EmojiPicker from 'vue3-emoji-picker';
 import { computed } from 'vue'
+import {useToastStore} from "../store/toast.js";
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
+const toastStore = useToastStore();
 
 const activeTab = ref('chats');
 const newMessageText = ref('');
@@ -1144,10 +1222,65 @@ const cancelReply = () => {
 }
 
 // 4. Переслать сообщение
+// Хранит сообщение, которое пользователь хочет переслать
+const forwardingMessage = ref(null)
+
+// Отвечает за видимость модального окна со списком чатов
+const isForwardModalOpen = ref(false)
+
+// Функция вызывается при клике на кнопку "Переслать" в контекстном меню
 const forwardMessage = (msg) => {
-  console.log('Переслать сообщение:', msg)
-  // Здесь логика открытия модального окна со списком контактов/чатов
-  closeActionsMenu()
+
+  forwardingMessage.value = msg
+  // Мгновенно закрываем контекстное меню сообщения
+  closeActionsMenu();
+
+  // Открываем модальное окно выбора чата
+  isForwardModalOpen.value = true
+}
+
+// Функция для окончательной отправки сообщения в выбранный чат
+const submitForward = async (targetChatId) => {
+  if (!forwardingMessage.value) return
+
+  try {
+    const formData = new FormData()
+    formData.append('chat_id', targetChatId)
+    // Пересылаем текст оригинального сообщения
+    if (forwardingMessage.value.text) {
+      formData.append('text', forwardingMessage.value.text)
+    }
+
+    // Метка для бэкэнда (опционально), что это сообщение переслано
+    formData.append('is_forwarded', 1);
+
+    // Если у сообщения были файлы/вложения, их тоже можно переслать (зависит от бэка)
+    // if (forwardingMessage.value.attachments) { ... }
+
+    // Вызываем ваш существующий экшен отправки
+    await chatStore.sendMessageAction(targetChatId, formData);
+    const targetChat = chatStore.chatList.find(c => c.id === targetChatId);
+    console.log(targetChat.users[0].name);
+    // Если переслали в текущий активный чат — сразу отображаем его в ленте
+    if (chatStore.activeChatId === targetChatId) {
+      scrollToBottom();
+    }
+
+    // Закрываем модальное окно и очищаем состояние
+    closeForwardModal();
+
+    // Показываем красивый Toast об успешной отправке (код тоста у нас уже есть)
+    toastStore.add(`Уведомление`, 'Сообщение переслано ' + targetChat.users[0].name, 'info');
+
+  } catch (error) {
+    console.error('Не удалось переслать сообщение:', error)
+  }
+}
+
+// Закрытие модального окна
+const closeForwardModal = () => {
+  isForwardModalOpen.value = false
+  forwardingMessage.value = null
 }
 
 // ================= ФУНКЦИОНАЛ ЧАТА =================

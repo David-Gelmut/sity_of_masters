@@ -2,8 +2,8 @@
   <div>
     <Sidebar />
     <div
-        :class="$route.name === 'Chat' ? 'overflow-hidden overscroll-none' : 'min-h-screen bg-slate-50'"
-        class="flex flex-col min-h-screen bg-slate-50 font-sans overflow-hidden ">
+        :class="$route.name === 'Chat' ? 'overflow-hidden overscroll-none' : ''"
+        class="flex flex-col min-h-screen bg-slate-50 font-sans">
       <Header />
         <main class="flex-1 pl-2 pr-2 md:p-8 w-full mx-auto">
           <router-view v-slot="{ Component }">

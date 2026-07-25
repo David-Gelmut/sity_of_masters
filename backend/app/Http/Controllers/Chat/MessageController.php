@@ -79,6 +79,7 @@ class MessageController extends Controller
             'text' => 'nullable|string|max:5000',
             'files' => 'nullable|array',
             'files.*' => 'file|max:102400', // 100MB
+            'is_forwarded' => 'nullable|boolean'
         ]);
 
         $hasAccess = $request->user()->chats()->where('chat_id', $chatId)->exists();
@@ -90,6 +91,7 @@ class MessageController extends Controller
         }
 
         $message = Message::create([
+            'is_forwarded'=>$request->is_forwarded,
             'parent_id' => $request->parent_id,
             'chat_id' => $chatId,
             // 'user_id' => auth()->id(),
