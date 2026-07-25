@@ -74,12 +74,23 @@ class MessageController extends Controller
      */
     public function sendMessage(Request $request, int $chatId): JsonResponse
     {
+        if ($request->has('attachments')) {
+            $request->merge([
+                'attachments' => json_decode($request->input('attachments'), true)
+            ]);
+        }
+
         $request->validate([
             'parent_id' => 'nullable|exists:messages,id',
             'text' => 'nullable|string|max:5000',
             'files' => 'nullable|array',
             'files.*' => 'file|max:102400', // 100MB
-            'is_forwarded' => 'nullable|boolean'
+            'is_forwarded' => 'nullable|boolean',
+            'attachments' => 'nullable|array',
+            'attachments.*.id'        => 'required|integer|exists:attachments,id',
+            'attachments.*.file_path' => 'required|string',
+            'attachments.*.file_name' => 'required|string|max:255',
+            'attachments.*.file_type' => 'required|string|in:image,video,document,file',
         ]);
 
         $hasAccess = $request->user()->chats()->where('chat_id', $chatId)->exists();
@@ -94,14 +105,14 @@ class MessageController extends Controller
             'is_forwarded'=>$request->is_forwarded,
             'parent_id' => $request->parent_id,
             'chat_id' => $chatId,
-            // 'user_id' => auth()->id(),
             'user_id' => $request->user()->id,
             'text' => $request->text ? Crypt::encryptString($request->text) : null,
         ]);
 
 
-        if ($request->hasFile('files')) {
+        if ($request->hasFile('files') && !$request->is_forwarded) {
             foreach ($request->file('files') as $file) {
+
                 $path = $file->store('chat_attachments', 'public');
 
                 $mime = $file->getMimeType();
@@ -113,7 +124,6 @@ class MessageController extends Controller
                     $fileType = 'video';
                 }
 
-
                 $message->attachments()->create([
                     'file_path' => Storage::disk('public')->url($path),
                     //'file_path' => Storage::url($path),
@@ -121,6 +131,20 @@ class MessageController extends Controller
                     'file_type' => $fileType,
                     'file_size' => $file->getSize(),
                     'driver' => 'local',
+                ]);
+            }
+        }
+
+        if ($request->has('attachments') && $request->is_forwarded) {
+            foreach ($request->attachments as $file) {
+
+                $message->attachments()->create([
+                    'message_id' => $message->id,
+                    'file_path'  => $file['file_path'],
+                    'file_name'  => $file['file_name'],
+                    'file_type'  => $file['file_type'],
+                    'file_size'  => $file['file_size'],
+                    'driver' => $file['driver'],
                 ]);
             }
         }

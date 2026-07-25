@@ -1254,8 +1254,10 @@ const submitForward = async (targetChatId) => {
     // Метка для бэкэнда (опционально), что это сообщение переслано
     formData.append('is_forwarded', 1);
 
-    // Если у сообщения были файлы/вложения, их тоже можно переслать (зависит от бэка)
-    // if (forwardingMessage.value.attachments) { ... }
+     // Если у сообщения были файлы/вложения, их тоже можно переслать (зависит от бэка)
+     if (forwardingMessage.value.attachments.length > 0) {
+       formData.append('attachments', JSON.stringify(forwardingMessage.value.attachments));
+     }
 
     // Вызываем ваш существующий экшен отправки
     await chatStore.sendMessageAction(targetChatId, formData);
