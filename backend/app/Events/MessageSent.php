@@ -79,9 +79,11 @@ class MessageSent implements ShouldBroadcastNow
             'text' => $decryptedText,
             'user_id' => $this->message->user_id,
             'user_name' => $this->message->user->name,
+            'user' => $this->message->user,
             'parent' => $this->message->parent,
             'attachments' => $this->message->attachments,
             'created_at' => $this->message->created_at->toIso8601String(),
+            'updated_at' => $this->message->updated_at->toIso8601String(),
         ];
     }
 }

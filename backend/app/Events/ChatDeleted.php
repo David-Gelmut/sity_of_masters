@@ -6,18 +6,19 @@ use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class ChatReadBroadcast implements ShouldBroadcastNow
+class ChatDeleted implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(public int $chatId,public int $userId)
+    public function __construct(public int $chatId,public  array $userIds)
     {
         //
     }
@@ -29,24 +30,15 @@ class ChatReadBroadcast implements ShouldBroadcastNow
      */
     public function broadcastOn(): array
     {
-        $channels = [
+       /* $channels = [
             new PrivateChannel('chat.' . $this->chatId)
-        ];
+        ];*/
 
-        if ($this->userId) {
-            // Добавляем персональный канал получателя в список рассылки Reverb
-            $channels[] = new PrivateChannel('user.' . $this->userId);
+        $channels = [];
+
+        foreach ($this->userIds as $userId) {
+            $channels[] = new PrivateChannel('user.' . $userId);
         }
-
         return $channels;
-    }
-
-    public function broadcastWith(): array
-    {
-        return [
-            'chat_id' => $this->chatId,
-            'user_id' => $this->userId, // ID того, кто прочитал
-            'read_at' => now()->toIso8601String() // Время прочтения
-        ];
     }
 }

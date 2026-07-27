@@ -40,6 +40,9 @@ Route::middleware(['auth:sanctum', 'verified', 'check.status'])->group(function 
     Route::get('/chats', [ChatController::class, 'getChats']);
     Route::post('/chats', [ChatController::class, 'store']);
     Route::get('/chats/users', [ChatController::class, 'getUsers']);
+    Route::post('/chats/group', [ChatController::class, 'createGroup']);
+    Route::delete('/chats/{chat}/users/{user}', [ChatController::class, 'removeUser']);
+
 
     Route::post('/chats/{id}/read', [MessageController::class, 'markAsRead']);
     Route::get('/chats/{id}/messages', [MessageController::class, 'getMessages']);

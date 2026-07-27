@@ -33,6 +33,13 @@
       <!-- Вкладки управления -->
       <div class="p-4 border-b border-slate-200 bg-white space-y-3">
 
+        <button
+            @click="isGroupModalOpen = true"
+            class="w-full mb-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs py-2 px-4 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+        >
+          <span>➕</span> Создать группу
+        </button>
+
         <!-- Кнопки переключения режимов -->
         <div class="flex md:mt-0 mt-16 rounded-lg bg-slate-100 p-0.5 border border-slate-200/50">
           <button
@@ -50,6 +57,7 @@
             Контакты
           </button>
         </div>
+
       </div>
 
       <!-- СПИСОК 1: Существующие диалоги (активные чаты) -->
@@ -67,20 +75,26 @@
         >
 
           <!-- Круглая иконка пользователя (Аватарка с инициалом) -->
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-semibold text-sm text-indigo-700 uppercase tracking-wider group-hover:bg-indigo-200 transition-colors overflow-hidden border border-indigo-200/50">
-
-            <!-- Добавили класс rounded-full на саму картинку -->
-            <img
-                v-if="chat.users[0]?.avatar_path"
-                :src="chat.users[0].avatar_path"
-                alt="Аватар"
-                class="h-full w-full object-cover rounded-full"
-            />
-
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-semibold text-sm text-indigo-700 uppercase tracking-wider group-hover:bg-indigo-200 transition-colors overflow-hidden border border-indigo-200/50"
+               :class="chat.type === 'group' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200/30' : 'bg-indigo-100 text-indigo-700 border border-indigo-200/30'"
+          >
+            <!-- 1. Если это ГРУППА и у нее есть кастомная аватарка -->
+            <img v-if="chat.type === 'group' && chat.avatar_path"
+                 :src="chat.avatar_path"
+                 alt=""
+                 class="h-full w-full object-cover rounded-full" />
+            <!-- 2. Если это ЛИЧНЫЙ ЧАТ (peer) и у собеседника есть аватарка -->
+            <img v-else-if="chat.type === 'peer' && chat.users[0]?.avatar_path"
+                 :src="chat.users[0]?.avatar_path"
+                 alt=""
+                 class="h-full w-full object-cover rounded-full" />
+            <!-- 3. Текстовые заглушки по умолчанию (если аватарок нет) -->
             <template v-else>
-              {{ chat.users[0].name ? chat.users[0].name.charAt(0) : 'U' }}
+              <!-- Иконка для групп -->
+              <span v-if="chat.type === 'group'">👥</span>
+              <!-- Первая буква имени реального собеседника для личных чатов -->
+              <span v-else>{{ chat.users[0]?.name?.charAt(0)  || 'U' }}</span>
             </template>
-
           </div>
 
           <!-- Имя собеседника и превью сообщения -->
@@ -88,7 +102,7 @@
 
             <div class="flex items-center justify-between">
               <span class="font-semibold text-sm text-slate-800 truncate">
-                {{ chat.users[0] ? chat.users[0].name : 'Собеседник' }}
+                {{  chat.type === 'group'? chat.title : chat.users[0]?.name }}
               </span>
               <!-- КРУЖОК НЕПРОЧИТАННЫХ СООБЩЕНИЙ -->
               <span v-if="chat.unread_count > 0"
@@ -174,61 +188,122 @@
     <div class="flex-1 flex flex-col bg-slate-50/30 max-w-full" :class="chatStore.activeChatId ? 'flex' : 'hidden md:flex'">
 
       <!-- Если чат выбран -->
-      <template v-if="chatStore.activeChatId">
+      <template v-if="activeChat">
 
         <!-- Шапка чата -->
         <div class=" h-14 border-b border-slate-200 bg-white px-6 flex items-center justify-between shadow-2xs">
 
-          <button @click="chatStore.activeChatId = null"
+<!--          <button @click="chatStore.activeChatId = null"
                   class="md:hidden mr-2 p-1 text-slate-500 hover:text-slate-700 cursor-pointer">
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
             </svg>
-          </button>
+          </button>-->
 
-          <div class="flex items-center gap-3">
-            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 font-semibold text-xs text-slate-600 uppercase">
-              <div
-                  @click="isAvatarModalOpen = true"
-                  class="flex h-full w-full items-center justify-center rounded-full bg-indigo-100 font-semibold text-xl text-indigo-700 uppercase tracking-wider overflow-hidden border border-indigo-200/50 shadow-2xs cursor-pointer"
-                  title="Просмотреть фото"
-              >
-                <img
-                    v-if="chatStore.activeInterlocutor?.avatar_path"
-                    :src="chatStore.activeInterlocutor.avatar_path"
-                    alt="Аватар"
-                    class="h-full w-full object-cover rounded-full transition-transform duration-200 group-hover:scale-105"
-                />
+
+
+          <div class="flex flex-row gap-2">
+            <div class="flex items-center gap-3 min-w-0">
+
+              <div class="h-9 w-9 rounded-full font-bold text-xs flex items-center justify-center uppercase shrink-0 overflow-hidden"
+                   :class="activeChat.type === 'group' ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'">
+
+                <!-- Сценарий 1: Это группа и у нее есть аватар -->
+                <img v-if="activeChat.type === 'group' && activeChat.avatar_path" :src="activeChat.avatar_path" alt="" class="h-full w-full object-cover" />
+
+                <!-- Сценарий 2: Это личный чат и у собеседника есть аватар -->
+                <img v-else-if="activeChat.type === 'peer' && activeChat.users[0]?.avatar_path" :src="activeChat.users[0]?.avatar_path" alt="" class="h-full w-full object-cover" />
+
+                <!-- Сценарий 3: Заглушки, если картинок нет -->
                 <template v-else>
-                  {{chatStore.activeInterlocutor?.name ? chatStore.activeInterlocutor.name.charAt(0) : 'U' }}
+                  <span v-if="activeChat.type === 'group'">👥</span>
+                  <span v-else>{{ activeChat?.name?.charAt(0) || 'U' }}</span>
                 </template>
+
+              </div>
+
+              <!-- Название и статус -->
+              <div class="min-w-0">
+                <h3 class="font-bold text-slate-800 text-xs truncate">
+                  {{ activeChat?.type === 'group' ? activeChat.title : chatStore.activeInterlocutor?.name }}
+                </h3>
+                <p class="text-[10px] text-slate-400 truncate">
+                  <!-- Если группа — пишем число участников -->
+                  <span v-if="activeChat?.type === 'group'">
+                  {{ activeChat.users_count || activeChat.users?.length || 0 }} участников
+                </span>
+                  <span v-else-if="chatStore.activeInterlocutor?.is_online" class="text-emerald-500 font-medium">в сети</span>
+                  <span v-else>был(а) недавно</span>
+                </p>
               </div>
             </div>
-            <div class="flex flex-col">
-              <span class="font-bold text-sm text-slate-800">
-                {{chatStore.activeInterlocutor ? chatStore.activeInterlocutor.name : 'Чат'}}
-              </span>
-              <!-- <span class="text-[11px] text-emerald-600 font-medium">Онлайн-трансляция сообщений</span>-->
-            </div>
+
+            <button
+                v-if="activeChat?.type === 'group'"
+                @click="isMembersModalOpen = true"
+                type="button"
+                class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                title="Посмотреть участников"
+            >
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
           </div>
 
+
+
           <!-- КНОПКИ УПРАВЛЕНИЯ ЧАТОМ -->
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1">
+            <!-- Кнопка 1: Очистить диалог (Кисточка) -->
             <button
+                v-if="activeChat?.type === 'peer' || (activeChat?.type === 'group' && amIAdmin)"
                 @click="clearChat"
                 title="Очистить диалог"
-                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer text-xs font-medium"
+                type="button"
+                class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 rounded-xl transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
             >
-              Очистить
+              <!-- Иконка: Кисть художественная/малярная -->
+              <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-6-4h6m-6 8h3" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 13a4 4 0 01-4 4H5" />
+              </svg>
             </button>
+
+            <!-- Кнопка 2: Удалить чат (Красное мусорное ведро) -->
             <button
+                v-if="activeChat?.type === 'peer' || (activeChat?.type === 'group' && amIAdmin)"
                 @click="deleteChat"
                 title="Удалить чат"
-                class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer text-xs font-medium"
+                type="button"
+                class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 active:bg-rose-100 rounded-xl transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
             >
-              Удалить
+              <!-- Иконка: Мусорный бак (Корзина) -->
+              <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
             </button>
           </div>
+
+          <!--          <div class="flex items-center gap-2">
+                      <button
+                          @click="clearChat"
+                          title="Очистить диалог"
+                          class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer text-xs font-medium"
+                      >
+                        Очистить
+                      </button>
+                      <button
+                          @click="deleteChat"
+                          title="Удалить чат"
+                          class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer text-xs font-medium"
+                      >
+                        Удалить
+                      </button>
+
+                    </div>-->
+
         </div>
 
         <!-- Лента сообщений -->
@@ -825,6 +900,135 @@
     </div>
   </div>
 
+  <div v-if="isGroupModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4" @click.self="isGroupModalOpen = false">
+    <div class="bg-white rounded-2xl w-full max-w-md flex flex-col shadow-2xl overflow-hidden">
+
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <h3 class="font-bold text-slate-800 text-sm">👥 Создание новой группы</h3>
+        <button @click="isGroupModalOpen = false" class="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
+      </div>
+
+      <form @submit.prevent="submitCreateGroup" class="p-4 flex flex-col gap-4">
+        <!-- Название группы -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-bold text-slate-500">Название группы</label>
+          <input v-model="groupTitle" type="text" placeholder="Например: Разработчики" required class="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none" />
+        </div>
+
+        <!-- Выбор участников (Чекбоксы) -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-bold text-slate-500">Выберите участников</label>
+          <div class="border border-slate-200 rounded-xl max-h-40 overflow-y-auto p-2 space-y-1.5">
+            <!-- Замените contactsList на ваш массив всех пользователей системы -->
+            <label v-for="user in chatStore.usersList" :key="user.id" class="flex items-center gap-2.5 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-xs">
+              <input type="checkbox" :value="user.id" v-model="selectedUserIds" class="rounded text-indigo-600 focus:ring-indigo-500" />
+              <span class="font-medium text-slate-700">{{ user.name }}</span>
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" :disabled="!groupTitle || selectedUserIds.length === 0" class="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-bold text-xs py-2.5 rounded-xl transition-colors cursor-pointer mt-2">
+          Создать групповый чат
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: Список участников группы -->
+  <div
+      v-if="isMembersModalOpen && activeChat"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
+      @click.self="isMembersModalOpen = false"
+  >
+    <div class="bg-white rounded-2xl w-full max-w-sm max-h-[75vh] flex flex-col shadow-2xl overflow-hidden animate-fade-in">
+
+      <!-- Шапка модалки -->
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div>
+          <h3 class="font-bold text-slate-800 text-sm truncate max-w-[240px]">
+            {{ activeChat.title }}
+          </h3>
+          <p class="text-[10px] text-slate-400 mt-0.5">Участники группы</p>
+        </div>
+        <button @click="isMembersModalOpen = false" class="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+      </div>
+
+      <!-- Список участников -->
+      <div class="flex-1 overflow-y-auto p-2 divide-y divide-slate-50 overscroll-contain">
+        <div
+            v-for="user in activeChat.users"
+            :key="user.id"
+            class="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 transition-colors"
+        >
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="h-8 w-8 rounded-full bg-indigo-50 font-bold text-[10px] text-indigo-600 flex items-center justify-center uppercase shrink-0 border border-indigo-100/20">
+              <img v-if="user.avatar_path" :src="user.avatar_path" alt="" class="h-full w-full object-cover rounded-full" />
+              <template v-else>{{ user.name?.charAt(0) || 'U' }}</template>
+            </div>
+            <div class="min-w-0">
+              <p class="text-xs font-semibold text-slate-700 truncate">{{ user.name }}</p>
+              <p class="text-[9px] text-slate-400 truncate">{{ user.email }}</p>
+            </div>
+          </div>
+
+          <!-- Метка роли (Админ / Участник) -->
+          <span
+              class="text-[9px] font-bold px-2 py-0.5 rounded-md"
+              :class="user.id === activeChat.creator_id ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-slate-100 text-slate-500'"
+          >
+            {{ user.id === activeChat.creator_id ? 'Админ' : 'Участник' }}
+          </span>
+
+          <button
+              v-if="amIAdmin && user.id !== currentUserId"
+              @click="kickUser(user.id)"
+              class="text-[10px] text-rose-500 hover:bg-rose-50 px-2 py-0.5 rounded-md font-medium cursor-pointer transition-colors"
+          >
+            Удалить
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- МОДАЛКА 1: Выбор режима ОЧИСТКИ истории -->
+  <div v-if="activeAction === 'clear'" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-5 flex flex-col gap-4 shadow-2xl animate-fade-in">
+      <h3 class="font-bold text-slate-800 text-sm">🧹 Очистить историю сообщений</h3>
+<!--      <p class="text-xs text-slate-500 leading-relaxed">Выберите, как вы хотите очистить переписку в этом чате:</p>-->
+      <div class="flex flex-col gap-2">
+<!--        <button @click="confirmClear(false)" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-2.5 rounded-xl cursor-pointer transition-colors">
+          Очистить только у себя
+        </button>-->
+        <!-- Кнопка "Для всех" активна всегда в peer-чате, а в группах — только для Админа -->
+        <button v-if="activeChat?.type === 'peer' || amIAdmin" @click="confirmClear(true)" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs py-2.5 rounded-xl cursor-pointer transition-colors">
+          Очистить для всех
+        </button>
+      </div>
+      <button @click="activeAction = null" class="text-xs text-slate-400 hover:text-slate-600 transition-colors mt-1 font-medium">Отмена</button>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА 2: Выбор режима УДАЛЕНИЯ чата -->
+  <div v-if="activeAction === 'delete'" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-5 flex flex-col gap-4 shadow-2xl animate-fade-in">
+      <h3 class="font-bold text-rose-600 text-sm">🚨 Удаление чата</h3>
+       <!--<p class="text-xs text-slate-500 leading-relaxed">Внимание! Выберите вариант удаления чата:</p>-->
+      <div class="flex flex-col gap-2">
+        <!--<button @click="confirmDelete(false)" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-2.5 rounded-xl cursor-pointer transition-colors">
+          Удалить/Скрыть только у себя
+        </button>-->
+        <!-- Полное уничтожение группы/диалога из базы доступно только админу или в личной переписке -->
+        <button v-if="activeChat?.type === 'peer' || amIAdmin" @click="confirmDelete(true)" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer transition-colors shadow-sm">
+          Удалить чат для всех
+        </button>
+      </div>
+      <button @click="activeAction = null" class="text-xs text-slate-400 hover:text-slate-600 transition-colors mt-1 font-medium">Отмена</button>
+    </div>
+  </div>
+
 </template>
 
 <script setup>
@@ -861,8 +1065,129 @@ const activeMessageId = ref(null)
 const isContextLoading = ref(false);
 const highlightedMessageId = ref(null);
 
+// Автоматически находит нужный чат в массиве по его ID
+const activeChat = computed(() => {
+  return chatStore.chatList.find(chat => chat.id === chatStore.activeChatId) || null;
+});
 
 
+const activeAction = ref(null); // Хранит текущее действие ('clear', 'delete' или null)
+
+// Очистить сообщения
+/*const clearChat = async () => {
+  if (!confirm('Вы уверены, что хотите очистить историю?')) return;
+  await chatStore.clearChatAction(chatStore.activeChatId);
+};
+
+// Полностью удалить чат
+const deleteChat = async () => {
+  if (!confirm('Вы уверены, что хотите безвозвратно удалить чат?')) return;
+  window.Echo.leaveChannel(`chat.${chatStore.activeChatId}`);
+  await chatStore.deleteChatAction(chatStore.activeChatId);
+};*/
+// При клике на иконку кисточки
+const clearChat = () => {
+  activeAction.value = 'clear';
+};
+
+// При клике на иконку красного ведра
+const deleteChat = () => {
+  activeAction.value = 'delete';
+
+};
+
+// Подтверждение очистки истории
+const confirmClear = async (forAll) => {
+  try {
+    activeAction.value = null;
+    isContextLoading.value = true;
+
+    // Передаем флаг for_all в теле или query-параметрах запроса
+    await axios.post(`/api/chats/${chatStore.activeChatId}/clear`, {
+      data: { for_all: forAll }
+    });
+
+    // Если удалили только у себя, у нас массив очистится, а у других по сокетам останется
+   // chatStore.activeChatMessages = [];
+    chatStore.messages = [];
+    chatStore.groupsMessages = [];
+  } catch (error) {
+    console.error('Ошибка очистки:', error);
+  } finally { isContextLoading.value = false; }
+};
+
+// Подтверждение удаления чата
+const confirmDelete = async (forAll) => {
+  try {
+    activeAction.value = null;
+    isContextLoading.value = true;
+
+    await chatStore.deleteChatAction(chatStore.activeChatId);
+    //chatStore.chatList = chatStore.chatList.filter(chat => chat.id !== chatStore.activeChatId);
+
+  } catch (error) {
+    console.error('Ошибка удаления чата:', error);
+  } finally {
+    isContextLoading.value = false;
+    //window.Echo.leaveChannel(`chat.${chatStore.activeChatId}`);
+  }
+};
+
+
+
+const kickUser = async (targetUserId) => {
+  if (!confirm('Вы уверены, что хотите удалить этого пользователя из группы?')) return;
+
+  try {
+    await axios.delete(`/api/chats/${activeChat.value.id}/users/${targetUserId}`);
+
+    // Мгновенно убираем исключенного пользователя из локального стейта во Vue
+    activeChat.value.users = activeChat.value.users.filter(u => u.id !== targetUserId);
+  } catch (error) {
+    console.error('Ошибка при удалении участника:', error);
+  }
+};
+
+
+// Создание группы
+const isGroupModalOpen = ref(false);
+const groupTitle = ref('');
+const selectedUserIds = ref([]); // Массив ID выбранных пользователей
+
+// Переменная для открытия модалки участников группы
+const isMembersModalOpen = ref(false);
+
+const amIAdmin = computed(() => {
+  if (!activeChat.value || activeChat.value.type !== 'group') return false;
+  return activeChat.value.creator_id === authStore.user.id;
+});
+
+const submitCreateGroup = async () => {
+  if (!groupTitle.value || selectedUserIds.value.length === 0) return;
+
+  try {
+    const response = await axios.post('/api/chats/group', {
+      title: groupTitle.value,
+      user_ids: selectedUserIds.value
+    });
+
+    // Добавляем созданную группу в общий список чатов Pinia стора
+    chatStore.chatList.unshift(response.data.data);
+
+    // Автоматически открываем только что созданную группу
+    chatStore.activeChatId = response.data.data.id;
+
+    // Сбрасываем форму
+    isGroupModalOpen.value = false;
+    groupTitle.value = '';
+    selectedUserIds.value = [];
+
+
+  } catch (error) {
+    console.error('Ошибка создания группы:', error);
+    alert('Не удалось создать группу');
+  }
+};
 
 /*const windowHeight = ref(0);
 const viewportHeight = ref(0);
@@ -1286,8 +1611,6 @@ const closeForwardModal = () => {
 }
 
 // ================= ФУНКЦИОНАЛ ЧАТА =================
-
-
 // Выбор и открытие чата
 const selectChat = async (id, user = null) => {
 
@@ -1304,7 +1627,7 @@ const selectChat = async (id, user = null) => {
 
   window.Echo.private(`chat.${id}`)
 
-      // 1. Слушаем отправку НОВЫХ сообщений
+     // 1. Слушаем отправку НОВЫХ сообщений
       .listen('MessageSent', (e) => {
         // Обновляем превью последнего сообщения в списке чатов слева
         const targetChat = chatStore.chatList.find(c => c.id === id);
@@ -1349,22 +1672,12 @@ const selectChat = async (id, user = null) => {
         // Мгновенно стираем удаленное облачко с экрана
         chatStore.messages = chatStore.messages.filter(m => m.id !== e.messageId);
         chatStore.groupsMessages = chatStore.groupedMessages(chatStore.messages);
-        //console.log(chatStore.messages)
         
         if(chatStore.messages.length ===0){
             chatStore.fetchChats();
-            //console.log(chatStore.chatList) ;
         }
-
-    
-        // Если удалили последнее сообщение — запрашиваем список чатов заново для обновления превью
-        // const targetChat = chatStore.chatList.find(c => c.id === id);
-        // if (targetChat && targetChat.last_message?.id === e.messageId) {
-          // Чтобы не писать сложную логику поиска предыдущего сообщения, просто обновляем список
-        //  chatStore.getChatList();
-        //}
       })
-      
+
       .listen('MessageReactionToggle', (e) => {
       
         // Ищем, в каком сообщении изменились реакции
@@ -1376,7 +1689,7 @@ const selectChat = async (id, user = null) => {
         }
 
       })
-      
+
       .listen('ChatReadBroadcast', (e) => {
       
         // Собеседник прочитал чат. Значит, ВСЕ НАШИ сообщения в этом чате теперь прочитаны.
@@ -1392,9 +1705,13 @@ const selectChat = async (id, user = null) => {
         if (targetChat) {
           targetChat.unread_count = 0;
         }
-      });
+      })
 
-};
+      .listen('ClearChat', (e) => {
+        chatStore.messages = [];
+        chatStore.groupsMessages = [];
+      });
+ };
 
 
 // Проверка, редактировалось ли сообщение
@@ -1453,18 +1770,37 @@ function onSelectEmoji(emoji) {
   showEmojiPicker.value = false;
 }
 
-// Массив Tailwind-классов для жесткой блокировки скролла на мобилках и ПК
-
-
 onMounted(() => {
+
   document.addEventListener('click', closeActionsMenu)
   chatStore.fetchChats();
   chatStore.fetchUsersList();
 
-  /*checkSizes();
-  window.visualViewport?.addEventListener('resize', checkSizes);*/
-});
+  const myId = authStore.user.id;
 
+  window.Echo.private(`user.${myId}`)
+
+      .listen('ChatDeleted', (e) => {
+        chatStore.chatList = chatStore.chatList.filter(chat => chat.id !== e.chatId);
+        // Если у этого пользователя прямо сейчас был ОТКРЫТ этот чат
+        if (chatStore.activeChatId && chatStore.activeChatId === e.chatId) {
+          chatStore.activeChatId = null; // Закрываем окно чата
+          console.log('Этот чат был удален создателем')
+          //alert('Этот чат был удален создателем');
+        }
+      })
+
+      .listen('GroupChatCreated', (e) => {
+        console.log(e);
+        chatStore.fetchChats();
+      })
+
+      .listen('CreateChat', (e) => {
+        console.log(e);
+        chatStore.fetchChats();
+  });
+
+});
 
 onUnmounted(() => {
 
@@ -1474,10 +1810,12 @@ onUnmounted(() => {
     window.Echo.leaveChannel(`chat.${chatStore.activeChatId}`);
     chatStore.activeChatId = null;
   }
-  
+
+  const currentUserId = authStore.user.id;
+  window.Echo.leave(`user.${currentUserId}`);
+
   console.log('Пользователь покинул чат. Полная очистка ресурсов...');
 
- /* window.visualViewport?.removeEventListener('resize', checkSizes);*/
 });
 
 // Клик по контакту
@@ -1593,18 +1931,7 @@ function removeFile(index) {
 }
 
 
-// Очистить сообщения
-const clearChat = async () => {
-  if (!confirm('Вы уверены, что хотите очистить историю?')) return;
-  await chatStore.clearChatAction(chatStore.activeChatId);
-};
 
-// Полностью удалить чат
-const deleteChat = async () => {
-  if (!confirm('Вы уверены, что хотите безвозвратно удалить чат?')) return;
-  window.Echo.leaveChannel(`chat.${chatStore.activeChatId}`);
-  await chatStore.deleteChatAction(chatStore.activeChatId);
-};
 
 
 // Главная функция скролла
