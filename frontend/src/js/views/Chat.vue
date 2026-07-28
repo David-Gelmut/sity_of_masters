@@ -193,14 +193,13 @@
         <!-- Шапка чата -->
         <div class=" h-14 border-b border-slate-200 bg-white px-6 flex items-center justify-between shadow-2xs">
 
-<!--          <button @click="chatStore.activeChatId = null"
+          <!-- Стрелочка назад в мобилке -->
+          <button @click="chatStore.activeChatId = null"
                   class="md:hidden mr-2 p-1 text-slate-500 hover:text-slate-700 cursor-pointer">
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
             </svg>
-          </button>-->
-
-
+          </button>
 
           <div class="flex flex-row gap-2">
             <div class="flex items-center gap-3 min-w-0">
