@@ -35,13 +35,13 @@
 
         <button
             @click="isGroupModalOpen = true"
-            class="w-full mb-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs py-2 px-4 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            class="w-full mt-12 md:mt-0 mb-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs py-2 px-4 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
         >
           <span>➕</span> Создать группу
         </button>
 
         <!-- Кнопки переключения режимов -->
-        <div class="flex md:mt-0 mt-16 rounded-lg bg-slate-100 p-0.5 border border-slate-200/50">
+        <div class="flex rounded-lg bg-slate-100 p-0.5 border border-slate-200/50">
           <button
               @click="activeTab = 'chats'"
               class="flex-1 text-xs py-1.5 font-medium rounded-md transition-all cursor-pointer"
