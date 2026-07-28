@@ -231,7 +231,7 @@
                   <span v-if="activeChat?.type === 'group'">
                   {{ activeChat.users_count || activeChat.users?.length || 0 }} участников
                 </span>
-                  <span v-else-if="chatStore.activeInterlocutor?.is_online" class="text-emerald-500 font-medium">в сети</span>
+                  <span v-else-if="isOnline(chatStore.activeInterlocutor?.id)" class="text-emerald-500 font-medium">в сети</span>
                   <span v-else>был(а) недавно</span>
                 </p>
               </div>
@@ -598,6 +598,12 @@
             </div>
 
           </div>
+        </div>
+
+
+        <!-- Индикатор «Печатает...» в самом низу списка сообщений -->
+        <div v-if="isTyping" class="typing-indicator">
+          <i>{{ typingUser }} печатает...</i>
         </div>
 
 
@@ -996,11 +1002,11 @@
   <div v-if="activeAction === 'clear'" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
     <div class="bg-white rounded-2xl w-full max-w-sm p-5 flex flex-col gap-4 shadow-2xl animate-fade-in">
       <h3 class="font-bold text-slate-800 text-sm">🧹 Очистить историю сообщений</h3>
-<!--      <p class="text-xs text-slate-500 leading-relaxed">Выберите, как вы хотите очистить переписку в этом чате:</p>-->
+      <!--   <p class="text-xs text-slate-500 leading-relaxed">Выберите, как вы хотите очистить переписку в этом чате:</p>   -->
       <div class="flex flex-col gap-2">
-<!--        <button @click="confirmClear(false)" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-2.5 rounded-xl cursor-pointer transition-colors">
+        <!--   <button @click="confirmClear(false)" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-2.5 rounded-xl cursor-pointer transition-colors">
           Очистить только у себя
-        </button>-->
+        </button>  -->
         <!-- Кнопка "Для всех" активна всегда в peer-чате, а в группах — только для Админа -->
         <button v-if="activeChat?.type === 'peer' || amIAdmin" @click="confirmClear(true)" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs py-2.5 rounded-xl cursor-pointer transition-colors">
           Очистить для всех
@@ -1054,6 +1060,11 @@ const editingMessageId = ref(null);
 let currentUserId = authStore.user?.id || null;
 const isAvatarModalOpen = ref(false);
 const isLoading = ref(false);
+const onlineUsers = ref([]);
+const isTyping = ref(false);
+const typingUser = ref(null);
+let typingTimeout = null;
+
 
 const isMyMessage = (id) => id === currentUserId;
 
@@ -1131,8 +1142,6 @@ const confirmDelete = async (forAll) => {
     //window.Echo.leaveChannel(`chat.${chatStore.activeChatId}`);
   }
 };
-
-
 
 const kickUser = async (targetUserId) => {
   if (!confirm('Вы уверены, что хотите удалить этого пользователя из группы?')) return;
@@ -1610,6 +1619,19 @@ const closeForwardModal = () => {
 }
 
 // ================= ФУНКЦИОНАЛ ЧАТА =================
+// Эту функцию нужно повесить на @input или @keydown вашего текстового поля (textarea)
+function sendTypingEvent() {
+
+  if (!chatStore.activeChatId) return;
+
+  // Отправляем «шепот» всем остальным участникам этого чата
+  window.Echo.private(`chat.${chatStore.activeChatId}`)
+      .whisper('typing', {
+        id: authStore.user.id,
+        name: authStore.user.name // передаем имя, чтобы красиво написать "Иван печатает..."
+      });
+}
+
 // Выбор и открытие чата
 const selectChat = async (id, user = null) => {
 
@@ -1709,7 +1731,18 @@ const selectChat = async (id, user = null) => {
       .listen('ClearChat', (e) => {
         chatStore.messages = [];
         chatStore.groupsMessages = [];
-      });
+      })
+
+      .listenForWhisper('typing', (e) => {
+          typingUser.value = e.name;
+          isTyping.value = true;
+
+          // Если через 2 секунды новых сигналов «печатает» нет — скрываем плашку
+          clearTimeout(typingTimeout);
+          typingTimeout = setTimeout(() => {
+            isTyping.value = false;
+          }, 2000);
+        });
  };
 
 
@@ -1769,6 +1802,11 @@ function onSelectEmoji(emoji) {
   showEmojiPicker.value = false;
 }
 
+// Функция для проверки в шаблоне Vue
+function isOnline(userId) {
+  return onlineUsers.value.includes(userId);
+}
+
 onMounted(() => {
 
   document.addEventListener('click', closeActionsMenu)
@@ -1798,6 +1836,25 @@ onMounted(() => {
         console.log(e);
         chatStore.fetchChats();
   });
+
+  window.Echo.join('online')
+      // Метод здесь вызывается ОДИН раз при загрузке и возвращает список ВСЕХ, кто уже в сети
+      .here((users) => {
+        onlineUsers.value = users.map(user => user.id);
+      })
+      // Вызывается, когда КТО-ТО НОВЫЙ заходит в мессенджер
+      .joining((user) => {
+        if (!onlineUsers.value.includes(user.id)) {
+          onlineUsers.value.push(user.id);
+        }
+      })
+      // Вызывается, когда КТО-ТО ВЫХОДИТ (закрыл вкладку / пропал интернет)
+      .leaving((user) => {
+        onlineUsers.value = onlineUsers.value.filter(id => id !== user.id);
+      })
+      .error((error) => {
+        console.error('Ошибка присутственного канала:', error);
+      });
 
 });
 
