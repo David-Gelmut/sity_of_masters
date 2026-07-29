@@ -205,7 +205,8 @@ class MessageController extends Controller
 
         // Шифруем новый текст
         $message->update([
-            'text' => Crypt::encryptString($request->text)
+            'text' => Crypt::encryptString($request->text),
+            'edited_at' => now()
         ]);
 
         // Для сокета возвращаем ЧИСТЫЙ расшифрованный текст

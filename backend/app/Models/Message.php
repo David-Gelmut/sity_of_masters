@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Message extends Model
 {
-    protected $fillable = ['chat_id', 'user_id', 'text', 'parent_id', 'is_forwarded'];
+    protected $fillable = ['chat_id', 'user_id', 'text', 'parent_id', 'is_forwarded', 'edited_at'];
 
     protected $casts = [
         // 'text' => 'encrypted',

@@ -464,7 +464,7 @@
                   <div class="flex right-2.5 justify-end gap-1 text-[10px]" :class="isMyMessage(msg.user_id) ? 'text-indigo-200' : 'text-slate-400'">
 
                     <!-- Метка "изм." -->
-                    <span v-if="isEdited(msg)" class="font-medium italic opacity-80">изм.</span>
+                    <span v-if="msg.edited_at" class="font-medium italic opacity-80">изм.</span>
 
                     <!-- Время отправки -->
                     <span>{{ formatTime(msg.created_at) }}</span>
