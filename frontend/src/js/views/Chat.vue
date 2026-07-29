@@ -604,7 +604,7 @@
 
 
         <!-- Индикатор «Печатает...» в самом низу списка сообщений -->
-        <div v-if="isTyping" class="typing-indicator">
+        <div v-if="isTyping" class="typing-indicator text-xs pl-2">
           <i>{{ typingUser }} печатает...</i>
         </div>
 
@@ -730,6 +730,7 @@
 
               <!-- Поле ввода текста -->
               <input
+                  @input="sendTypingEvent"
                   v-model="newMessageText"
                   type="text"
                   placeholder="Напишите сообщение..."
@@ -1749,9 +1750,9 @@ const selectChat = async (id, user = null) => {
 
 
 // Проверка, редактировалось ли сообщение
-function isEdited(msg) {
+/*function isEdited(msg) {
   return msg.created_at !== msg.updated_at;
-}
+}*/
 
 // Функция форматирования времени (из ISO в ЧЧ:ММ)
 function formatTime(isoString) {
