@@ -204,8 +204,10 @@
           <div class="flex flex-row gap-2">
             <div class="flex items-center gap-3 min-w-0">
 
-              <div class="h-9 w-9 rounded-full font-bold text-xs flex items-center justify-center uppercase shrink-0 overflow-hidden"
-                   :class="activeChat.type === 'group' ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'">
+              <div
+                  @click="isAvatarModalOpen = true"
+                  class="h-9 w-9 rounded-full font-bold text-xs flex items-center justify-center uppercase shrink-0 overflow-hidden  cursor-pointer"
+                  :class="activeChat.type === 'group' ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'">
 
                 <!-- Сценарий 1: Это группа и у нее есть аватар -->
                 <img v-if="activeChat.type === 'group' && activeChat.avatar_path" :src="activeChat.avatar_path" alt="" class="h-full w-full object-cover" />
