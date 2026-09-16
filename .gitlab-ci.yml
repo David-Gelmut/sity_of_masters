@@ -5,7 +5,7 @@ stages:
 deploy_production:
   stage: deploy
   tags:
-    - vps-deploy
+    - deploy
   script:
     - cd /var/www/davidgelmut.ru
     - git fetch origin
@@ -19,7 +19,7 @@ deploy_production:
 deploy_development:
   stage: deploy
   tags:
-    - vps-deploy
+    - deploy
   script:
     - cd /var/www/dev.davidgelmut.ru
     - git fetch origin
