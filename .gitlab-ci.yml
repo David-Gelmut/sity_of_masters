@@ -24,13 +24,13 @@ deploy_development:
   tags:
     - deploy # Тот же раннер, так как оба сайта живут на одном VPS
   script:
-     # 1. Переходим в папку дев-сайта
-     cd /var/www/dev.davidgelmut.ru
-     # 2. Скачиваем свежий код из ветки dev
-     git fetch origin
-     git reset --hard origin/dev
-     # 3. Перезапускаем Docker-контейнеры для dev-окружения
-     docker compose down
-     docker compose up -d --build
+   # 1. Переходим в папку дев-сайта
+    cd /var/www/dev.davidgelmut.ru
+   # 2. Скачиваем свежий код из ветки dev
+    git fetch origin
+    git reset --hard origin/dev
+   # 3. Перезапускаем Docker-контейнеры для dev-окружения
+    docker compose down
+    docker compose up -d --build
   rules:
     - if: $CI_COMMIT_BRANCH == "dev" # Запускать только при пуше в dev
