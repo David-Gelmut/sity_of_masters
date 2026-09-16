@@ -5,32 +5,26 @@ stages:
 deploy_production:
   stage: deploy
   tags:
-    - vps-deploy # Указываем тег вашего раннера, чтобы задача ушла именно на ваш VPS
+    - vps-deploy
   script:
-    # 1. Переходим в папку основного сайта на сервере
-    cd /var/www/davidgelmut.ru
-    # 2. Скачиваем свежий код из ветки main
-    git fetch origin
-    git reset --hard origin/main
-    # 3. Перезапускаем контейнеры Docker (сборка новых образов и запуск в фоне)
-    docker compose down
-    docker compose up -d --build
+    - cd /var/www/davidgelmut.ru
+    - git fetch origin
+    - git reset --hard origin/main
+    - docker compose down
+    - docker compose up -d --build
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" # Запускать только при пуше в main
+    - if: $CI_COMMIT_BRANCH == "main"
 
 # Настройки деплоя для поддомена dev (ветка dev)
 deploy_development:
   stage: deploy
   tags:
-    - vps-deploy # Тот же раннер, так как оба сайта живут на одном VPS
+    - vps-deploy
   script:
-    # 1. Переходим в папку дев-сайта
-    cd /var/www/dev.davidgelmut.ru
-    # 2. Скачиваем свежий код из ветки dev
-    git fetch origin
-    git reset --hard origin/dev
-    # 3. Перезапускаем Docker-контейнеры для dev-окружения
-    docker compose down
-    docker compose up -d --build
+    - cd /var/www/dev.davidgelmut.ru
+    - git fetch origin
+    - git reset --hard origin/dev
+    - docker compose down
+    - docker compose up -d --build
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev" # Запускать только при пуше в dev
+    - if: $CI_COMMIT_BRANCH == "dev"
