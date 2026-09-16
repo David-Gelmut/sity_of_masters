@@ -16,12 +16,6 @@
   </div>
 
 </div-->
-<!-- ВРЕМЕННАЯ ТЕСТОВАЯ ПЛАШКА ДЛЯ REDMI 9 -->
-<!--  <div class="fixed top-2 right-2 z-50 bg-slate-900/90 text-white text-[10px] p-3 rounded-xl font-mono space-y-1 shadow-lg pointer-events-none">
-    <div>📱 Window H: {{ windowHeight }}px</div>
-    <div>👁️ Viewport H: {{ viewportHeight }}px</div>
-    <div>⌨️ Клавиатура: {{ keyboardHeight }}px</div>
-  </div>-->
 
   <div
       class="flex h-[90dvh] border border-slate-200 rounded-2xl bg-white shadow-xs font-sans">
@@ -540,7 +534,14 @@
                       isMyMessage(msg.user_id) ? 'right-0' : 'left-0'
                     ]"
                     >
-                      <EmojiPicker :picker-type="'popup'" :native="true" :theme="'light'" :hide-group-names="true" :disable-skin-tones="true" class="!w-[260px] !h-[300px] !shadow-none !border-none text-sm" @select="onSelectEmoji($event, msg.id)" />
+                      <EmojiPicker
+                          :picker-type="'popup'"
+                          :native="true"
+                          :theme="'light'"
+                          :hide-group-names="true"
+                          :disable-skin-tones="true"
+                          class="!w-[260px] !h-[300px] !shadow-none !border-none text-sm"
+                          @select="onSelectEmoji($event, msg.id)" />
                     </div>
 
                   </div>
@@ -614,7 +615,9 @@
 
           <!-- Окошко выбора Эмодзи -->
           <div v-if="showEmojiPicker" class="absolute bottom-20 right-4 z-50 shadow-xl rounded-xl overflow-hidden">
-            <EmojiPicker :native="true" @select="onSelectEmoji" />
+            <EmojiPicker
+                :native="true"
+                @select="onSelectEmoji" />
           </div>
 
           <!-- Скрытый системный инпут для файлов -->
@@ -908,6 +911,7 @@
     </div>
   </div>
 
+
   <div v-if="isGroupModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4" @click.self="isGroupModalOpen = false">
     <div class="bg-white rounded-2xl w-full max-w-md flex flex-col shadow-2xl overflow-hidden">
 
@@ -1001,6 +1005,7 @@
 
     </div>
   </div>
+
   <!-- МОДАЛКА 1: Выбор режима ОЧИСТКИ истории -->
   <div v-if="activeAction === 'clear'" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
     <div class="bg-white rounded-2xl w-full max-w-sm p-5 flex flex-col gap-4 shadow-2xl animate-fade-in">
