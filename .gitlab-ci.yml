@@ -5,7 +5,7 @@ stages:
 deploy_production:
   stage: deploy
   tags:
-    - deploy # Указываем тег вашего раннера, чтобы задача ушла именно на ваш VPS
+    - vps-deploy # Указываем тег вашего раннера, чтобы задача ушла именно на ваш VPS
   script:
     # 1. Переходим в папку основного сайта на сервере
     cd /var/www/davidgelmut.ru
@@ -22,14 +22,14 @@ deploy_production:
 deploy_development:
   stage: deploy
   tags:
-    - deploy # Тот же раннер, так как оба сайта живут на одном VPS
+    - vps-deploy # Тот же раннер, так как оба сайта живут на одном VPS
   script:
-   # 1. Переходим в папку дев-сайта
+    # 1. Переходим в папку дев-сайта
     cd /var/www/dev.davidgelmut.ru
-   # 2. Скачиваем свежий код из ветки dev
+    # 2. Скачиваем свежий код из ветки dev
     git fetch origin
     git reset --hard origin/dev
-   # 3. Перезапускаем Docker-контейнеры для dev-окружения
+    # 3. Перезапускаем Docker-контейнеры для dev-окружения
     docker compose down
     docker compose up -d --build
   rules:
