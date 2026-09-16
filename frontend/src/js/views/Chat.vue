@@ -1091,6 +1091,7 @@ const activeChat = computed(() => {
 
 const activeAction = ref(null); // Хранит текущее действие ('clear', 'delete' или null)
 
+
 // Очистить сообщения
 /*const clearChat = async () => {
   if (!confirm('Вы уверены, что хотите очистить историю?')) return;
