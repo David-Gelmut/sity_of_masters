@@ -7,15 +7,14 @@ deploy_production:
   tags:
     - deploy # Указываем тег вашего раннера, чтобы задача ушла именно на ваш VPS
   script:
-    echo "test prod"
-  #  # 1. Переходим в папку основного сайта на сервере
-  #  cd /var/www/davidgelmut.ru
-  #  # 2. Скачиваем свежий код из ветки main
-  #  git fetch origin
-  #  git reset --hard origin/main
-  #  # 3. Перезапускаем контейнеры Docker (сборка новых образов и запуск в фоне)
-  #  docker compose down
-  #  docker compose up -d --build
+    # 1. Переходим в папку основного сайта на сервере
+    cd /var/www/davidgelmut.ru
+    # 2. Скачиваем свежий код из ветки main
+    git fetch origin
+    git reset --hard origin/main
+    # 3. Перезапускаем контейнеры Docker (сборка новых образов и запуск в фоне)
+    docker compose down
+    docker compose up -d --build
   rules:
     - if: $CI_COMMIT_BRANCH == "main" # Запускать только при пуше в main
 
@@ -25,14 +24,13 @@ deploy_development:
   tags:
     - deploy # Тот же раннер, так как оба сайта живут на одном VPS
   script:
-    echo "test dev"
-  #  # 1. Переходим в папку дев-сайта
-  #  cd /var/www/dev.davidgelmut.ru
-  #  # 2. Скачиваем свежий код из ветки dev
-  #  git fetch origin
-  #  git reset --hard origin/dev
-  #  # 3. Перезапускаем Docker-контейнеры для dev-окружения
-  #  docker compose down
-  #  docker compose up -d --build
+     # 1. Переходим в папку дев-сайта
+     cd /var/www/dev.davidgelmut.ru
+     # 2. Скачиваем свежий код из ветки dev
+     git fetch origin
+     git reset --hard origin/dev
+     # 3. Перезапускаем Docker-контейнеры для dev-окружения
+     docker compose down
+     docker compose up -d --build
   rules:
     - if: $CI_COMMIT_BRANCH == "dev" # Запускать только при пуше в dev
