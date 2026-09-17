@@ -19,9 +19,8 @@ app_build_dev:
   only:
     - dev
   script:
-    - docker build --build-arg NODE_ENV="dev" -t "$REGISTRY/dev/app:dev" -f ./backend/docker/gitlab/Dockerfile .
-    - docker push "$REGISTRY/dev/app:dev"
-    #- docker push "$REGISTRY/dev/app:$CI_COMMIT_SHA"
+    - docker build --build-arg NODE_ENV="dev" -t "$REGISTRY/dev/app:$CI_COMMIT_SHA" -f ./backend/docker/gitlab/Dockerfile .
+    - docker push "$REGISTRY/dev/app:$CI_COMMIT_SHA"
 
 app_build_prod:
   stage: build
@@ -30,8 +29,8 @@ app_build_prod:
   only:
     - main
   script:
-    - docker build --build-arg NODE_ENV="prod" -t "$REGISTRY/prod/app:prod" -f ./backend/docker/gitlab/Dockerfile .
-    - docker push "$REGISTRY/prod/app:prod"
+    - docker build --build-arg NODE_ENV="prod" -t "$REGISTRY/prod/app:$CI_COMMIT_SHA" -f ./backend/docker/gitlab/Dockerfile .
+    - docker push "$REGISTRY/prod/app:$CI_COMMIT_SHA"
 
 # ==========================================
 # ДЕПЛОЙ НА СЕРВЕР (Локальный раннер)
