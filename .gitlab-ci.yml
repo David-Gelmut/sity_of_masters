@@ -49,9 +49,12 @@ dev_deploy:
     - export CONTAINER_PREFIX="project_dev"
     - cd /var/www/dev.davidgelmut.ru
     - cp "$DEV_ENV" backend/.env
-    - docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml down --remove-orphans
-    - docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml pull
-    - docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml up -d
+    - CONTAINER_PREFIX="project_prod" IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA" docker compose -f docker-compose.prod.yml down --remove-orphans
+    - CONTAINER_PREFIX="project_prod" IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA" docker compose -f docker-compose.prod.yml pull
+    - CONTAINER_PREFIX="project_prod" IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA" docker compose -f docker-compose.prod.yml up -d
+    #- docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml down --remove-orphans
+    #- docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml pull
+    #- docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml up -d
     - docker exec ${CONTAINER_PREFIX}_app composer install
     - docker exec ${CONTAINER_PREFIX}_app php artisan migrate
     - docker exec ${CONTAINER_PREFIX}_app php artisan cache:clear
@@ -72,9 +75,12 @@ prod_deploy:
     - export CONTAINER_PREFIX="project_prod"
     - cd /var/www/davidgelmut.ru
     - cp "$PROD_ENV" backend/.env
-    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml down --remove-orphans
-    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml pull
-    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml up -d
+    - CONTAINER_PREFIX="project_prod" IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA" docker compose -f docker-compose.prod.yml down --remove-orphans
+    - CONTAINER_PREFIX="project_prod" IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA" docker compose -f docker-compose.prod.yml pull
+    - CONTAINER_PREFIX="project_prod" IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA" docker compose -f docker-compose.prod.yml up -d
+    #- docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml down --remove-orphans
+    #- docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml pull
+    #- docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml up -d
     - docker exec ${CONTAINER_PREFIX}_app composer install
     - docker exec ${CONTAINER_PREFIX}_app php artisan migrate
     - docker exec ${CONTAINER_PREFIX}_app php artisan cache:clear
