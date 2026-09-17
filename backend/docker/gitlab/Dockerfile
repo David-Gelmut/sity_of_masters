@@ -23,7 +23,9 @@ RUN apk add --no-cache \
     linux-headers
 
 # Скачиваем скрипт напрямую из релизов GitHub (вместо Docker Hub)
-ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+#ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+RUN chmod +x /usr/local/bin/install-php-extensions
 
 # Установка PHP расширений
 RUN install-php-extensions \
