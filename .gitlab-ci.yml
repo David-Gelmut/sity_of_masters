@@ -4,6 +4,7 @@ stages:
 
 variables:
   REGISTRY: "registry.gitlab.com/davidgelmut-group/sity_of_masters"
+  DOCKER_BUILDKIT: "1"
 
 # ==========================================
 # СБОРКА ОБРАЗОВ (В облаке GitLab)
@@ -43,7 +44,7 @@ dev_deploy:
   tags:
     - deploy
   only:
-    - develop
+    - dev
   script:
     # Заходим в рабочую папку dev-сайта на сервере
     - cd /var/www/dev.davidgelmut.ru
