@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
-Route::get('/api/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
     ->middleware(['signed'])
     ->name('verification.verify');
 
