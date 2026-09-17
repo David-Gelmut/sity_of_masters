@@ -15,7 +15,7 @@ app_build_dev:
   tags:
     - deploy
   only:
-    - develop
+    - dev
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
@@ -109,9 +109,13 @@ prod_deploy:
     - cd /var/www/davidgelmut.ru
     - export CONTAINER_PREFIX="project_prod"
     - export IMAGE_TAG="$REGISTRY/prod/app:$CI_COMMIT_SHA"
-    - cp "$DEV_ENV" backend/.env
-    - docker stop $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
-    - docker rm $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
+    - cp "$PROD_ENV" backend/.env
+    # Флаг -p принудительно заставит Docker работать с нужным префиксом и применит новые имена.
+    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml down --remove-orphans
+    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml pull
+    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml up -d
+    #- docker stop $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
+    #- docker rm $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
     - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml up -d --build
     - docker exec ${CONTAINER_PREFIX}_app composer install
     - docker exec ${CONTAINER_PREFIX}_app php artisan migrate
