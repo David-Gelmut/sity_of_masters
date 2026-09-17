@@ -107,8 +107,8 @@ prod_deploy:
     #- docker exec ${CONTAINER_PREFIX}_app php artisan config:cache
     #- docker exec ${CONTAINER_PREFIX}_app php artisan route:cache
     - cd /var/www/davidgelmut.ru
-    - export CONTAINER_PREFIX="project_dev"
-    - export IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA"
+    - export CONTAINER_PREFIX="project_prod"
+    - export IMAGE_TAG="$REGISTRY/prod/app:$CI_COMMIT_SHA"
     - cp "$DEV_ENV" backend/.env
     - docker stop $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
     - docker rm $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
