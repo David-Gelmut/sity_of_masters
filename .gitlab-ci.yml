@@ -54,7 +54,8 @@ dev_deploy:
     # Авторизуем сервер в реестре, чтобы он мог скачать приватный образ
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     # Подкладываем файл окружения из секретов GitLab
-    - echo "$DEV_ENV" > .env
+    - cp "$DEV_ENV" .env
+    #- echo "$DEV_ENV" > .env
     # Аккуратно гасим старые контейнеры этого проекта
     - docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml down --remove-orphans
     # Скачиваем свежий собранный образ из GitLab Registry
@@ -82,7 +83,8 @@ prod_deploy:
     - export CONTAINER_PREFIX="project_prod"
     - export IMAGE_TAG="$REGISTRY/prod/app:$CI_COMMIT_SHA"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - echo "$PROD_ENV" > .env
+    - cp "$PROD_ENV" .env
+    #- echo "$PROD_ENV" > .env
     - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml down --remove-orphans
     - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml pull
     - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml up -d
