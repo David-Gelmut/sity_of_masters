@@ -19,7 +19,7 @@ app_build_dev:
   only:
     - dev
   script:
-    - docker build --build-arg NODE_ENV="dev" -t "$REGISTRY/dev/app:$CI_COMMIT_SHA" -f ./backend/docker/gitlab/Dockerfile .
+    - docker build --no-cache --build-arg NODE_ENV="dev" -t "$REGISTRY/dev/app:$CI_COMMIT_SHA" -f ./backend/docker/gitlab/Dockerfile .
     - docker push "$REGISTRY/dev/app:$CI_COMMIT_SHA"
 
 app_build_prod:
@@ -29,7 +29,7 @@ app_build_prod:
   only:
     - main
   script:
-    - docker build --build-arg NODE_ENV="prod" -t "$REGISTRY/prod/app:$CI_COMMIT_SHA" -f ./backend/docker/gitlab/Dockerfile .
+    - docker build --no-cache --build-arg NODE_ENV="prod" -t "$REGISTRY/prod/app:$CI_COMMIT_SHA" -f ./backend/docker/gitlab/Dockerfile .
     - docker push "$REGISTRY/prod/app:$CI_COMMIT_SHA"
 
 # ==========================================
