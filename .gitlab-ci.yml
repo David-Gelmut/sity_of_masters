@@ -56,7 +56,7 @@ dev_deploy:
     #- CONTAINER_PREFIX="project_prod" IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA" docker compose -f docker-compose.prod.yml pull
     #- CONTAINER_PREFIX="project_prod" IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA" docker compose -f docker-compose.prod.yml up -d
     - docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml down --remove-orphans
-    - docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml pull
+    #- docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml pull
     - docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml up -d
     - docker exec ${CONTAINER_PREFIX}_app composer install
     - docker exec ${CONTAINER_PREFIX}_app php artisan migrate
@@ -82,7 +82,7 @@ prod_deploy:
     #- CONTAINER_PREFIX="project_prod" IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA" docker compose -f docker-compose.prod.yml pull
     #- CONTAINER_PREFIX="project_prod" IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA" docker compose -f docker-compose.prod.yml up -d
     - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml down --remove-orphans
-    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml pull
+    #- docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml pull
     - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml up -d
     - docker exec ${CONTAINER_PREFIX}_app composer install
     - docker exec ${CONTAINER_PREFIX}_app php artisan migrate
