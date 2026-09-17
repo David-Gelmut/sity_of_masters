@@ -1,7 +1,7 @@
 services:
 
   app:
-    image: ${IMAGE_TAG}
+    image: "$REGISTRY/prod/app:$CI_COMMIT_SHA"
     container_name: ${CONTAINER_PREFIX}_app
     restart: unless-stopped
     working_dir: /var/www
@@ -26,7 +26,7 @@ services:
       - app-network
 
   queue-worker:
-    image: ${IMAGE_TAG}
+    image: "$REGISTRY/prod/app:$CI_COMMIT_SHA"
     container_name: ${CONTAINER_PREFIX}_worker
     restart: unless-stopped
     working_dir: /var/www
@@ -97,7 +97,7 @@ services:
       - app-network
 
   reverb:
-    image: ${IMAGE_TAG}
+    image: "$REGISTRY/prod/app:$CI_COMMIT_SHA"
     container_name: ${CONTAINER_PREFIX}_reverb
     restart: unless-stopped
     working_dir: /var/www
