@@ -2,9 +2,6 @@ services:
 
   app:
     image: ${IMAGE_TAG}
-    #build:
-    #  context: ./backend/docker
-    #  dockerfile: Dockerfile
     container_name: ${CONTAINER_PREFIX}_app
     restart: unless-stopped
     working_dir: /var/www
@@ -15,14 +12,13 @@ services:
     shm_size: '2gb'
     ports:
       - ${APP_PORT}:80
-    #  - "8000:80"
     volumes:
       - ./backend/docker/nginx.conf:/etc/nginx/nginx.conf
       - ./backend/docker/nginx.conf:/etc/nginx/conf.d/uploads.conf
       - ./backend/docker/php.ini:/usr/local/etc/php/conf.d/uploads.ini
       - ./backend:/var/www
-    env_file:
-      - backend/.env
+    #env_file:
+    #  - backend/.env
     depends_on:
       - mysql
       - redis
@@ -31,9 +27,6 @@ services:
 
   queue-worker:
     image: ${IMAGE_TAG}
-    #build:
-    #  context: ./backend/docker
-    #  dockerfile: Dockerfile
     container_name: ${CONTAINER_PREFIX}_worker
     restart: unless-stopped
     working_dir: /var/www
@@ -45,8 +38,8 @@ services:
     shm_size: '2gb'
     volumes:
       - ./backend/:/var/www
-    env_file:
-      - ./backend/.env
+    #env_file:
+    #  - ./backend/.env
     depends_on:
       - mysql
       - redis
@@ -60,15 +53,13 @@ services:
     ports:
       - ${RABBITMQ_PORT}:5672
       - ${RABBITMQ_PANEL_PORT}:15672
-     # - "5672:5672"       # Порт для обмена сообщениями
-     # - "15672:15672"     # Веб-панель управления (логин/пароль ниже)
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-    env_file:
-      - ./backend/.env
+    #env_file:
+    #  - ./backend/.env
     depends_on:
       - queue-worker
       - reverb
@@ -88,8 +79,8 @@ services:
       - ${DB_EXPOSE_PORT}:3306
     volumes:
       - mysql_data:/var/lib/mysql
-    env_file:
-      - ./backend/.env
+    #env_file:
+    #  - ./backend/.env
     networks:
       - app-network
 
@@ -101,16 +92,12 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - ${REDIS_PORT}
-      #- "6379:6379"
+      - ${REDIS_PORT}:6379
     networks:
       - app-network
 
   reverb:
     image: ${IMAGE_TAG}
-    #build:
-    #  context: ./backend/docker
-    #  dockerfile: Dockerfile
     container_name: ${CONTAINER_PREFIX}_reverb
     restart: unless-stopped
     working_dir: /var/www
@@ -119,7 +106,6 @@ services:
       - ./backend:/var/www
     ports:
       - ${REVERB_PORT}:8080
-      # - "8080:8080"
     depends_on:
       - mysql
     networks:
