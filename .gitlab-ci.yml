@@ -47,7 +47,7 @@ dev_deploy:
     - dev
   script:
   # # Заходим в рабочую папку dev-сайта на сервере
-  # - cd /var/www/dev.davidgelmut.ru
+  #
   # # Создаем переменные для docker-compose
   # - export CONTAINER_PREFIX="project_dev"
   # - export IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA"
@@ -68,10 +68,10 @@ dev_deploy:
   # - docker exec ${CONTAINER_PREFIX}_app php artisan cache:clear
   # - docker exec ${CONTAINER_PREFIX}_app php artisan config:cache
   # - docker exec ${CONTAINER_PREFIX}_app php artisan route:cache
-
+    - cd /var/www/dev.davidgelmut.ru
     - export CONTAINER_PREFIX="project_dev"
     - export IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA"
-    - cp "$DEV_ENV" .env
+    - cp "$DEV_ENV" backend/.env
     - docker stop $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
     - docker rm $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
     - docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml up -d --build
@@ -106,10 +106,10 @@ prod_deploy:
     #- docker exec ${CONTAINER_PREFIX}_app php artisan cache:clear
     #- docker exec ${CONTAINER_PREFIX}_app php artisan config:cache
     #- docker exec ${CONTAINER_PREFIX}_app php artisan route:cache
-
+    - cd /var/www/davidgelmut.ru
     - export CONTAINER_PREFIX="project_dev"
     - export IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA"
-    - cp "$DEV_ENV" .env
+    - cp "$DEV_ENV" backend/.env
     - docker stop $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
     - docker rm $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
     - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml up -d --build
