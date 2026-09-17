@@ -4,7 +4,7 @@ stages:
 
 variables:
   REGISTRY: "registry.gitlab.com/davidgelmut-group/sity_of_masters"
-  DOCKER_BUILDKIT: "1"
+  #DOCKER_BUILDKIT: "1"
 
 # ==========================================
 # СБОРКА ОБРАЗОВ (В облаке GitLab)
