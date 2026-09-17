@@ -112,7 +112,7 @@ prod_deploy:
     - cp "$DEV_ENV" .env
     - docker stop $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
     - docker rm $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
-    - docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml up -d --build
+    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml up -d --build
     - docker exec ${CONTAINER_PREFIX}_app composer install
     - docker exec ${CONTAINER_PREFIX}_app php artisan migrate
     - docker exec ${CONTAINER_PREFIX}_app php artisan cache:clear
