@@ -1,30 +1,92 @@
 stages:
+  - build
   - deploy
 
-# Настройки деплоя для основного домена (ветка main)
-deploy_production:
+variables:
+  REGISTRY: "registry.gitlab.com/davidgelmut-group/sity_of_masters"
+
+# ==========================================
+# СБОРКА ОБРАЗОВ (В облаке GitLab)
+# ==========================================
+
+app_build_dev:
+  stage: build
+  tags:
+    - deploy
+  only:
+    - develop
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build --build-arg NODE_ENV="dev" -t "$REGISTRY/dev/app:$CI_COMMIT_SHA" -f ./backend/docker/gitlab/Dockerfile .
+    - docker push "$REGISTRY/dev/app:$CI_COMMIT_SHA"
+
+app_build_prod:
+  stage: build
+  tags:
+    - deploy
+  only:
+    - main
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build --build-arg NODE_ENV="prod" -t "$REGISTRY/prod/app:$CI_COMMIT_SHA" -f ./backend/docker/gitlab/Dockerfile .
+    - docker push "$REGISTRY/prod/app:$CI_COMMIT_SHA"
+
+# ==========================================
+# ДЕПЛОЙ НА СЕРВЕР (Локальный раннер)
+# ==========================================
+
+# 1. ДЕВ-СРЕДА (Ветка develop)
+dev_deploy:
   stage: deploy
   tags:
     - deploy
+  only:
+    - develop
+  script:
+    # Заходим в рабочую папку dev-сайта на сервере
+    - cd /var/www/dev.davidgelmut.ru
+    # Создаем переменные для docker-compose
+    - export CONTAINER_PREFIX="project_dev"
+    - export IMAGE_TAG="$REGISTRY/dev/app:$CI_COMMIT_SHA"
+    # Авторизуем сервер в реестре, чтобы он мог скачать приватный образ
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    # Подкладываем файл окружения из секретов GitLab
+    - echo "$DEV_ENV" > .env
+    # Аккуратно гасим старые контейнеры этого проекта
+    - docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml down --remove-orphans
+    # Скачиваем свежий собранный образ из GitLab Registry
+    - docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml pull
+    # Запускаем проект (БЕЗ локальной сборки --build)
+    - docker compose -p $CONTAINER_PREFIX -f docker-compose.dev.yml up -d
+    # Выполняем команды автоматизации Laravel внутри контейнера
+    - docker exec ${CONTAINER_PREFIX}_app composer install --no-dev --optimize-autoloader
+    - docker exec ${CONTAINER_PREFIX}_app php artisan migrate --force
+    - docker exec ${CONTAINER_PREFIX}_app php artisan cache:clear
+    - docker exec ${CONTAINER_PREFIX}_app php artisan config:cache
+    - docker exec ${CONTAINER_PREFIX}_app php artisan route:cache
+
+# 2. ПРОД-СРЕДА (Ветка main)
+prod_deploy:
+  stage: deploy
+  tags:
+    - deploy
+  only:
+    - main
+    - tags
+  when: manual # Прод запускаем только вручную по кнопке в интерфейсе GitLab
   script:
     - cd /var/www/davidgelmut.ru
-    - git fetch origin
-    - git reset --hard origin/main
-    - docker compose down
-    - docker compose up -d --build
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-
-# Настройки деплоя для поддомена dev (ветка dev)
-deploy_development:
-  stage: deploy
-  tags:
-    - deploy
-  script:
-    - cd /var/www/dev.davidgelmut.ru
-    - git fetch origin
-    - git reset --hard origin/dev
-    - docker compose down
-    - docker compose up -d --build
-  rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
+    - export CONTAINER_PREFIX="project_prod"
+    - export IMAGE_TAG="$REGISTRY/prod/app:$CI_COMMIT_SHA"
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - echo "$PROD_ENV" > .env
+    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml down --remove-orphans
+    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml pull
+    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml up -d
+    - docker exec ${CONTAINER_PREFIX}_app composer install --no-dev --optimize-autoloader
+    - docker exec ${CONTAINER_PREFIX}_app php artisan migrate --force
+    - docker exec ${CONTAINER_PREFIX}_app php artisan cache:clear
+    - docker exec ${CONTAINER_PREFIX}_app php artisan config:cache
+    - docker exec ${CONTAINER_PREFIX}_app php artisan route:cache
